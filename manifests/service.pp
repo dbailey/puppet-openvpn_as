@@ -12,6 +12,7 @@ class openvpn_as::service {
   service { 'openvpnas':
     ensure => $openvpn_as::service_ensure,
     enable => true,
+    hasstatus => false
   }
 
 }
