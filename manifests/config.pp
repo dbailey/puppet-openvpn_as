@@ -7,6 +7,7 @@ class openvpn_as::config(
   $admin_ui_https_port                  = $openvpn_as::admin_ui_https_port,
   $admin_users                          = $openvpn_as::admin_users,
   $cs_https_port                        = $openvpn_as::cs_https_port,
+  $cs_tls_version_min                   = $openvpn_as::cs_tls_version_min,
   $host_name                            = $openvpn_as::host_name,
   $use_custom_port_config               = $openvpn_as::use_custom_port_config,
   $vpn_client_basic                     = $openvpn_as::vpn_client_basic,
@@ -16,6 +17,7 @@ class openvpn_as::config(
   $vpn_server_google_auth_enable        = $openvpn_as::vpn_server_google_auth_enable,
   $vpn_server_port_share_service        = $openvpn_as::vpn_server_port_share_service,
   $vpn_server_routing_private_network_0 = $openvpn_as::vpn_server_routing_private_network_0,
+  $vpn_server_tls_version_min           = $openvpn_as::vpn_server_tls_version_min,
 ) {
 
   # Prepapre the database paths (MySQL or SQLite):
@@ -121,6 +123,24 @@ class openvpn_as::config(
     refreshonly => true,
   }
 
+  # Tell OpenVPN what the minimum tls version for the web server is:
+  file { '/usr/local/openvpn_as/openvpn.cs.tls.version.min':
+    content => "${cs_tls_version_min}",
+  } ~>
+  exec {'openvpn-cs-tls-version-min':
+    command     => "/usr/local/openvpn_as/scripts/confdba -mk cs.tls_version_min -v '${cs_tls_version_min}' && touch /tmp/openvpn.cs.tls.version.min",
+    refreshonly => true,
+  }
+
+  # Tell OpenVPN what the minimum tls version for the web server is:
+  file { '/usr/local/openvpn_as/openvpn.vpn.server.tls.version.min':
+    content => "${vpn_server_tls_version_min}",
+  } ~>
+  exec {'openvpn-vpn-server-tls-version-min':
+    command     => "/usr/local/openvpn_as/scripts/confdba -mk vpn.server.tls_version_min -v '${vpn_server_tls_version_min}' && touch /tmp/openvpn.vpn.server.tls.version.min",
+    refreshonly => true,
+  }
+
   # Optionally override the default port config:
   if $use_custom_port_config {
 
@@ -150,6 +170,7 @@ class openvpn_as::config(
       command     => "/usr/local/openvpn_as/scripts/confdba -mk admin_ui.https.port -v '${admin_ui_https_port}' && touch /tmp/openvpn.admin_ui.https.port",
       refreshonly => true,
     }
+
   }
 
   # Mark users as being "admin" users (for loop please):
